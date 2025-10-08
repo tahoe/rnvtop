@@ -7,7 +7,7 @@ use std::time::Duration;
 fn main() -> io::Result<()> {
     let args: Vec<String> = env::args().collect();
     let mut do_loop = false;
-    if args.len() > 1 {
+    if args.len() > 1 && args[1] == "-l" {
         do_loop = true;
     }
 
