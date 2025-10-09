@@ -72,12 +72,12 @@ fn print_nv_results(device: &Device, looping: bool) {
     println!("Brand: {:?}\r", brand);
 
     // Fan speed is also simple
-    let fan_speed = device.fan_speed(0).unwrap(); // Currently 17% on my system
+    let fan_speed = device.fan_speed(0).unwrap_or(0); // Currently 17% on my system
     println!("Fan Speed: {fan_speed}%\r");
 
     // Power output is simple but we want in Watts, not micro watts...
-    let pwr_wtts_used = device.power_usage().unwrap() / 1000;
-    let pwr_wtts_cap = device.power_management_limit().unwrap() / 1000;
+    let pwr_wtts_used = device.power_usage().unwrap_or(0) / 1000;
+    let pwr_wtts_cap = device.power_management_limit_default().unwrap_or(0) / 1000;
     println!("Power Usage: Used:{pwr_wtts_used}W, Max:{pwr_wtts_cap}W\r");
 
     // Get base outputs from device
