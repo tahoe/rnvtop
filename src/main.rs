@@ -11,22 +11,25 @@ fn main() -> io::Result<()> {
         do_loop = true;
     }
 
+    // This stuff needs to be in main so we don't re-init the device
     let nvml = Nvml::init();
     // Get the first `Device` (GPU) in the system
     let nvml_obj = nvml.expect("wtf");
     let nv_dev = nvml_obj.device_by_index(0).unwrap();
-    loop {
-        if do_loop {
+
+    // Start the loop if asked for
+    if do_loop {
+        loop {
             println!("\x1B[2J\x1B[1;1H");
-        }
 
+            print_nv_results(&nv_dev);
+
+            io::stdout().flush()?;
+            sleep(Duration::from_secs(1));
+        }
+    } else {
         print_nv_results(&nv_dev);
-
-        io::stdout().flush()?;
-        if !do_loop {
-            break Ok(());
-        }
-        sleep(Duration::from_secs(1));
+        Ok(())
     }
 }
 
