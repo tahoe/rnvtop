@@ -1,3 +1,4 @@
+use chrono::offset::Local as localtime;
 use nvml_wrapper::{Device, Nvml};
 use std::env;
 use std::io::{self, Write};
@@ -45,6 +46,9 @@ fn main() -> io::Result<()> {
 }
 
 fn print_nv_results(device: &Device) {
+    // print local time of course
+    println!("{}", localtime::now().format("%Y-%m-%d %H:%M:%S"));
+
     // Brand is simple...
     let brand = device.brand().unwrap(); // GeForce on my system
     println!("Brand: {:?}", brand);
@@ -61,14 +65,17 @@ fn print_nv_results(device: &Device) {
     // Get base outputs from device
     let memory_info = device.memory_info().unwrap();
     let gpu_util = device.utilization_rates().unwrap().gpu;
-    // let encoder_util = device.encoder_utilization();
-    // let decoder_util = device.decoder_utilization();
+    let encoder_util = device.encoder_utilization().unwrap().utilization;
+    let decoder_util = device.decoder_utilization().unwrap().utilization;
 
     // Get MEM specific outputs and print
     let mem_used = format!("{:.2}", memory_info.used as f32 / 1_000_000_000.0);
     let mem_total = format!("{:.2}", memory_info.total as f32 / 1_000_000_000.0);
     println!("Memory Usage: Used:{mem_used}GB, Total:{mem_total}GB");
 
-    // get GPU specific usage info and print
-    println!("GPU Use: {gpu_util}%");
+    // print the GPU usage
+    println!(
+        "GPU Use: {gpu_util}%, Encoder: {:?}%, Decoder: {:?}%",
+        encoder_util, decoder_util
+    );
 }
