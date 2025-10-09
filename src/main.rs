@@ -18,7 +18,7 @@ fn main() -> io::Result<()> {
         do_loop = true;
         // only if the first one is true, do we look for the second var
         if args.len() > 2 && args[2].chars().all(|c| c.is_ascii_digit()) {
-            loop_secs = args[2].parse::<u64>().unwrap()
+            loop_secs = args[2].parse::<u64>().unwrap_or(1);
         }
     }
 
