@@ -34,20 +34,22 @@ fn main() -> io::Result<()> {
         loop {
             println!("\x1B[2J\x1B[1;1H");
 
-            print_nv_results(&nv_dev);
+            print_nv_results(&nv_dev, do_loop);
 
             io::stdout().flush()?;
             sleep(Duration::from_secs(loop_secs));
         }
     } else {
-        print_nv_results(&nv_dev);
+        print_nv_results(&nv_dev, do_loop);
         Ok(())
     }
 }
 
-fn print_nv_results(device: &Device) {
-    // print local time of course
-    println!("{}", localtime::now().format("%Y-%m-%d %H:%M:%S"));
+fn print_nv_results(device: &Device, looping: bool) {
+    // print local time of course only if in a loop
+    if looping {
+        println!("{}", localtime::now().format("%Y-%m-%d %H:%M:%S"));
+    }
 
     // Brand is simple...
     let brand = device.brand().unwrap(); // GeForce on my system
