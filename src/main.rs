@@ -6,13 +6,20 @@ use std::time::Duration;
 
 fn main() -> io::Result<()> {
     let args: Vec<String> = env::args().collect();
+
+    // set two vars for controlling the app
+    // one determines whether to loop or not
+    // second one determines how frequent to restart loop
     let mut do_loop = false;
     let mut loop_secs: i32 = 1;
+
+    // update the two vars above if the correct args are provided
     if args.len() > 1 && args[1] == "-l" {
         do_loop = true;
-    }
-    if args.len() > 2 && args[2].chars().all(|c| c.is_ascii_digit()) {
-        loop_secs = args[2].parse().unwrap();
+        // only if the first one is true, do we look for the second var
+        if args.len() > 2 && args[2].chars().all(|c| c.is_ascii_digit()) {
+            loop_secs = args[2].parse().unwrap();
+        }
     }
 
     // This stuff needs to be in main so we don't re-init the device
