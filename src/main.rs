@@ -44,13 +44,12 @@ fn main() -> io::Result<()> {
             print_nv_results(&nv_dev, do_loop);
 
             io::stdout().flush()?;
-            if event::poll(Duration::from_millis(100))? {
-                if let Event::Key(key_event) = event::read()? {
-                    if key_event.code == KeyCode::Char('q') {
-                        terminal::disable_raw_mode()?;
-                        break Ok(());
-                    }
-                }
+            if event::poll(Duration::from_millis(100))?
+                && let Event::Key(key_event) = event::read()?
+                && key_event.code == KeyCode::Char('q')
+            {
+                terminal::disable_raw_mode()?;
+                break Ok(());
             }
             sleep(Duration::from_secs(loop_secs));
         }
@@ -74,6 +73,12 @@ fn print_nv_results(device: &Device, looping: bool) {
     // Fan speed is also simple
     let fan_speed = device.fan_speed(0).unwrap_or(0); // Currently 17% on my system
     println!("Fan Speed: {fan_speed}%\r");
+
+    //Get temp info
+    let gpu_temp = device
+        .temperature(nvml_wrapper::enum_wrappers::device::TemperatureSensor::Gpu)
+        .unwrap_or(0);
+    println!("GPU Temp: {gpu_temp}C\r");
 
     // Power output is simple but we want in Watts, not micro watts...
     let pwr_wtts_used = device.power_usage().unwrap_or(0) / 1000;
