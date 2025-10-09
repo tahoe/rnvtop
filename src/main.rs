@@ -7,8 +7,12 @@ use std::time::Duration;
 fn main() -> io::Result<()> {
     let args: Vec<String> = env::args().collect();
     let mut do_loop = false;
+    let mut loop_secs: i32 = 1;
     if args.len() > 1 && args[1] == "-l" {
         do_loop = true;
+    }
+    if args.len() > 2 && args[2].chars().all(|c| c.is_ascii_digit()) {
+        loop_secs = args[2].parse().unwrap();
     }
 
     // This stuff needs to be in main so we don't re-init the device
@@ -25,7 +29,7 @@ fn main() -> io::Result<()> {
             print_nv_results(&nv_dev);
 
             io::stdout().flush()?;
-            sleep(Duration::from_secs(1));
+            sleep(Duration::from_secs(loop_secs.try_into().unwrap()));
         }
     } else {
         print_nv_results(&nv_dev);
