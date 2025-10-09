@@ -56,6 +56,7 @@ fn main() -> io::Result<()> {
         }
     } else {
         print_nv_results(&nv_dev, do_loop);
+        terminal::disable_raw_mode()?;
         Ok(())
     }
 }
