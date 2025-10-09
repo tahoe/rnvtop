@@ -11,14 +11,14 @@ fn main() -> io::Result<()> {
     // one determines whether to loop or not
     // second one determines how frequent to restart loop
     let mut do_loop = false;
-    let mut loop_secs: i32 = 1;
+    let mut loop_secs: u64 = 1;
 
     // update the two vars above if the correct args are provided
     if args.len() > 1 && args[1] == "-l" {
         do_loop = true;
         // only if the first one is true, do we look for the second var
         if args.len() > 2 && args[2].chars().all(|c| c.is_ascii_digit()) {
-            loop_secs = args[2].parse().unwrap();
+            loop_secs = args[2].parse::<u64>().unwrap()
         }
     }
 
@@ -36,7 +36,7 @@ fn main() -> io::Result<()> {
             print_nv_results(&nv_dev);
 
             io::stdout().flush()?;
-            sleep(Duration::from_secs(loop_secs.try_into().unwrap()));
+            sleep(Duration::from_secs(loop_secs));
         }
     } else {
         print_nv_results(&nv_dev);
