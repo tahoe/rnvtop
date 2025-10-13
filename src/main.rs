@@ -72,6 +72,7 @@ pub struct Stats {
     pub dec_util: u32,
     pub mem_used: f32,
     pub mem_total: f32,
+    pub drvr_ver: String,
 }
 
 impl Stats {
@@ -92,6 +93,12 @@ impl Stats {
         let memory_info = device.memory_info().unwrap();
         let mem_used = memory_info.used as f32 / 1_024_000_000.0;
         let mem_total = memory_info.total as f32 / 1_024_000_000.0;
+
+        // get the driver memory_info
+        let drvr_ver = device
+            .nvml()
+            .sys_driver_version()
+            .unwrap_or("N/A".to_owned());
         Self {
             brand,
             fan_speed,
@@ -103,6 +110,7 @@ impl Stats {
             dec_util,
             mem_total,
             mem_used,
+            drvr_ver,
         }
     }
 }
@@ -115,7 +123,7 @@ fn print_nv_results(device: &Device, looping: bool) {
     }
 
     // print the brand name
-    println!("Brand: {:?}\r", stats.brand);
+    println!("Brand: {:?}, Version: {}\r", stats.brand, stats.drvr_ver);
 
     // print the fan speed
     println!("Fan Speed: {:?}%\r", stats.fan_speed);
