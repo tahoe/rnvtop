@@ -378,7 +378,7 @@ dependencies = [
 
 [[package]]
 name = "rnvtop"
-version = "0.1.5"
+version = "0.1.6"
 dependencies = [
  "bytesize",
  "chrono",
