@@ -20,13 +20,18 @@ fn main() -> io::Result<()> {
     // second one determines how frequent to restart loop
     let mut do_loop = false;
     let mut loop_secs: u64 = 1;
+    let mut oneliner = false;
 
     // update the two vars above if the correct args are provided
-    if args.len() > 1 && args[1] == "-l" {
-        do_loop = true;
-        // only if the first one is true, do we look for the second var
-        if args.len() > 2 && args[2].chars().all(|c| c.is_ascii_digit()) {
-            loop_secs = args[2].parse::<u64>().unwrap_or(1);
+    if args.len() > 1 {
+        if args[1] == "-l" {
+            do_loop = true;
+            // only if the first one is true, do we look for the second var
+            if args.len() > 2 && args[2].chars().all(|c| c.is_ascii_digit()) {
+                loop_secs = args[2].parse::<u64>().unwrap_or(1);
+            }
+        } else if args[1] == "-o" {
+            oneliner = true;
         }
     }
 
@@ -54,7 +59,11 @@ fn main() -> io::Result<()> {
             sleep(Duration::from_secs(loop_secs));
         }
     } else {
-        print_nv_results(&nv_dev, do_loop);
+        if oneliner {
+            print_oneline(&nv_dev);
+        } else {
+            print_nv_results(&nv_dev, do_loop);
+        }
         terminal::disable_raw_mode()?;
         Ok(())
     }
@@ -113,6 +122,14 @@ impl Stats {
             drvr_ver,
         }
     }
+}
+
+fn print_oneline(device: &Device) {
+    let stats = Stats::new(device);
+    println!(
+        "GPU: {:?} Enc: {:?} Dec: {:?} Tmp: {:?} Fan: {:?}\r",
+        stats.gpu_util, stats.enc_util, stats.dec_util, stats.gpu_temp, stats.fan_speed
+    );
 }
 
 fn print_nv_results(device: &Device, looping: bool) {
