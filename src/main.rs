@@ -92,14 +92,11 @@ fn print_nv_results(device: &Device, looping: bool) {
     let decoder_util = device.decoder_utilization().unwrap().utilization;
 
     // Get MEM specific outputs and print
-    let mem_used = format!("{:.2}", memory_info.used as f32 / 1_000_000_000.0);
-    let mem_total = format!("{:.2}", memory_info.total as f32 / 1_000_000_000.0);
+    let mem_used = format!("{:.2}", memory_info.used as f32 / 1_024_000_000.0);
+    let mem_total = format!("{:.2}", memory_info.total as f32 / 1_024_000_000.0);
     println!("Memory Usage: Used:{mem_used}GB, Total:{mem_total}GB\r");
 
     // print the GPU usage
     // print without newline so as not to waste space...
-    println!(
-        "GPU Usage: {gpu_util}%, Encoder: {:?}%, Decoder: {:?}%\r",
-        encoder_util, decoder_util
-    );
+    println!("GPU Usage: {gpu_util}%, Encoder: {encoder_util}%, Decoder: {decoder_util}%\r");
 }
