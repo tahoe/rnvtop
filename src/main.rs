@@ -3,7 +3,7 @@ use crossterm::{
     event::{self, Event, KeyCode},
     terminal,
 };
-use nvml_wrapper::{Device, Nvml};
+use nvml_wrapper::{enum_wrappers::device::Brand, Device, Nvml};
 use std::env;
 use std::io::{self, Write};
 use std::thread::sleep;
@@ -60,43 +60,85 @@ fn main() -> io::Result<()> {
     }
 }
 
+#[derive(Clone, Debug, PartialEq)]
+pub struct Stats {
+    pub brand: Brand,
+    pub fan_speed: u32,
+    pub gpu_temp: u32,
+    pub pwr_used: u32,
+    pub pwr_cap: u32,
+    pub gpu_util: u32,
+    pub enc_util: u32,
+    pub dec_util: u32,
+    pub mem_used: f32,
+    pub mem_total: f32,
+}
+
+impl Stats {
+    pub fn new(device: &Device) -> Self {
+        let brand = device.brand().unwrap(); // GeForce on my system
+        let fan_speed = device.fan_speed(0).unwrap_or(0); // Currently 17% on my system
+        let gpu_temp = device
+            .temperature(nvml_wrapper::enum_wrappers::device::TemperatureSensor::Gpu)
+            .unwrap_or(0);
+        let pwr_used = device.power_usage().unwrap_or(0) / 1000;
+        let pwr_cap = device.power_management_limit_default().unwrap_or(0) / 1000;
+
+        let gpu_util = device.utilization_rates().unwrap().gpu;
+        let enc_util = device.encoder_utilization().unwrap().utilization;
+        let dec_util = device.decoder_utilization().unwrap().utilization;
+
+        // Get MEM specific outputs and print
+        let memory_info = device.memory_info().unwrap();
+        let mem_used = (memory_info.used as f32 / 1_024_000_000.0).trunc();
+        let mem_total = (memory_info.total as f32 / 1_024_000_000.0).trunc();
+        Self {
+            brand,
+            fan_speed,
+            gpu_temp,
+            pwr_cap,
+            pwr_used,
+            gpu_util,
+            enc_util,
+            dec_util,
+            mem_total,
+            mem_used,
+        }
+    }
+}
+
 fn print_nv_results(device: &Device, looping: bool) {
+    let stats = Stats::new(device);
     // print local time of course only if in a loop
     if looping {
         println!("{}\r", localtime::now().format("%Y-%m-%d %H:%M:%S"));
     }
 
-    // Brand is simple...
-    let brand = device.brand().unwrap(); // GeForce on my system
-    println!("Brand: {:?}\r", brand);
+    // print the brand name
+    println!("Brand: {:?}\r", stats.brand);
 
-    // Fan speed is also simple
-    let fan_speed = device.fan_speed(0).unwrap_or(0); // Currently 17% on my system
-    println!("Fan Speed: {fan_speed}%\r");
+    // print the fan speed
+    println!("Fan Speed: {:?}%\r", stats.fan_speed);
 
-    //Get temp info
-    let gpu_temp = device
-        .temperature(nvml_wrapper::enum_wrappers::device::TemperatureSensor::Gpu)
-        .unwrap_or(0);
-    println!("GPU Temp: {gpu_temp}C\r");
+    // print the gpu temp
+    println!("GPU Temp: {:?}C\r", stats.gpu_temp);
 
-    // Power output is simple but we want in Watts, not micro watts...
-    let pwr_wtts_used = device.power_usage().unwrap_or(0) / 1000;
-    let pwr_wtts_cap = device.power_management_limit_default().unwrap_or(0) / 1000;
-    println!("Power Usage: Used:{pwr_wtts_used}W, Max:{pwr_wtts_cap}W\r");
+    // print the power used/cap
+    println!(
+        "Power Usage: Used:{:?}W, Max:{:?}W\r",
+        stats.pwr_used, stats.pwr_cap
+    );
 
-    // Get base outputs from device
-    let memory_info = device.memory_info().unwrap();
-    let gpu_util = device.utilization_rates().unwrap().gpu;
-    let encoder_util = device.encoder_utilization().unwrap().utilization;
-    let decoder_util = device.decoder_utilization().unwrap().utilization;
-
-    // Get MEM specific outputs and print
-    let mem_used = format!("{:.2}", memory_info.used as f32 / 1_024_000_000.0);
-    let mem_total = format!("{:.2}", memory_info.total as f32 / 1_024_000_000.0);
-    println!("Memory Usage: Used:{mem_used}GB, Total:{mem_total}GB\r");
+    // print the mem used/total
+    println!(
+        "Memory Usage: Used:{:?}GB, Total:{:?}GB\r",
+        stats.mem_used, stats.mem_total
+    );
 
     // print the GPU usage
     // print without newline so as not to waste space...
-    println!("GPU Usage: {gpu_util}%, Encoder: {encoder_util}%, Decoder: {decoder_util}%\r");
+    println!(
+        "GPU Usage: {:?}%, Encoder: {:?}%, Decoder: {:?}%\r",
+        stats.gpu_util, stats.enc_util, stats.dec_util
+    );
 }
