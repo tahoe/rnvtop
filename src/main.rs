@@ -1,10 +1,11 @@
 use chrono::offset::Local as localtime;
+use clap::Parser;
 use crossterm::{
     event::{self, Event, KeyCode},
     terminal,
 };
 use nvml_wrapper::{enum_wrappers::device::Brand, Device, Nvml};
-use std::env;
+// use std::env;
 use std::io::{self, Write};
 use std::thread::sleep;
 use std::time::Duration;
@@ -13,27 +14,8 @@ fn main() -> io::Result<()> {
     // Raw mode required for getting the 'q' so we can quit
     terminal::enable_raw_mode()?;
 
-    let args: Vec<String> = env::args().collect();
-
-    // set two vars for controlling the app
-    // one determines whether to loop or not
-    // second one determines how frequent to restart loop
-    let mut do_loop = false;
-    let mut loop_secs: u64 = 1;
-    let mut oneliner = false;
-
-    // update the two vars above if the correct args are provided
-    if args.len() > 1 {
-        if args[1] == "-l" {
-            do_loop = true;
-            // only if the first one is true, do we look for the second var
-            if args.len() > 2 && args[2].chars().all(|c| c.is_ascii_digit()) {
-                loop_secs = args[2].parse::<u64>().unwrap_or(1);
-            }
-        } else if args[1] == "-o" {
-            oneliner = true;
-        }
-    }
+    // parse our args into args
+    let args = Args::parse();
 
     // This stuff needs to be in main so we don't re-init the device
     let nvml = Nvml::init();
@@ -42,11 +24,15 @@ fn main() -> io::Result<()> {
     let nv_dev = nvml_obj.device_by_index(0).unwrap();
 
     // Start the loop if asked for
-    if do_loop {
+    if args.loopit {
         loop {
             println!("\x1B[2J\x1B[1;1H");
 
-            print_nv_results(&nv_dev, do_loop);
+            if args.oneliner {
+                print_oneline(&nv_dev);
+            } else {
+                print_multiliner(&nv_dev, args.loopit);
+            }
 
             io::stdout().flush()?;
             if event::poll(Duration::from_millis(100))?
@@ -56,17 +42,34 @@ fn main() -> io::Result<()> {
                 terminal::disable_raw_mode()?;
                 break Ok(());
             }
-            sleep(Duration::from_secs(loop_secs));
+            sleep(Duration::from_secs(args.freq));
         }
     } else {
-        if oneliner {
+        if args.oneliner {
             print_oneline(&nv_dev);
         } else {
-            print_nv_results(&nv_dev, do_loop);
+            print_multiliner(&nv_dev, args.loopit);
         }
         terminal::disable_raw_mode()?;
         Ok(())
     }
+}
+
+#[derive(Parser, Debug)]
+#[command(version, about, long_about = None)]
+struct Args {
+    // -l argument for running in a loop
+    #[arg(short, long, default_value_t = false)]
+    loopit: bool,
+
+    // -f argument for loop frequency
+    #[arg(short, long, default_value_t = 1)]
+    freq: u64,
+
+    // -o argument for printing single line!
+    // This should just change the default which is multi line, verbose output
+    #[arg(short, long, default_value_t = false)]
+    oneliner: bool,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -132,7 +135,7 @@ fn print_oneline(device: &Device) {
     );
 }
 
-fn print_nv_results(device: &Device, looping: bool) {
+fn print_multiliner(device: &Device, looping: bool) {
     let stats = Stats::new(device);
     // print local time of course only if in a loop
     if looping {
