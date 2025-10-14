@@ -85,6 +85,7 @@ pub struct Stats {
     pub mem_used: f32,
     pub mem_total: f32,
     pub drvr_ver: String,
+    pub cuda_ver: f32,
 }
 
 impl Stats {
@@ -111,6 +112,9 @@ impl Stats {
             .nvml()
             .sys_driver_version()
             .unwrap_or("N/A".to_owned());
+
+        // get the driver memory_info
+        let cuda_ver = device.nvml().sys_cuda_driver_version().unwrap_or(0) as f32 / 1000.0;
         Self {
             brand,
             fan_speed,
@@ -123,6 +127,7 @@ impl Stats {
             mem_total,
             mem_used,
             drvr_ver,
+            cuda_ver,
         }
     }
 }
@@ -143,7 +148,10 @@ fn print_multiliner(device: &Device, looping: bool) {
     }
 
     // print the brand name
-    println!("Brand: {:?}, Version: {}\r", stats.brand, stats.drvr_ver);
+    println!(
+        "Brand: {:?}, Driver Ver: {}, CUDA Ver: {:.1}\r",
+        stats.brand, stats.drvr_ver, stats.cuda_ver
+    );
 
     // print the fan speed
     println!("Fan Speed: {:?}%\r", stats.fan_speed);
