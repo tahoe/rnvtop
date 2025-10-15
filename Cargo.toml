@@ -1,6 +1,6 @@
 [package]
 name = "rnvtop"
-version = "0.2.0"
+version = "0.2.2"
 description = "General Nvidia GPU monitoring"
 edition = "2024"
 license = "MIT"
@@ -8,5 +8,6 @@ license = "MIT"
 [dependencies]
 bytesize = "2.1.0"
 chrono = "0.4.42"
+clap = { version = "4.5.49", features = ["derive"] }
 crossterm = "0.29.0"
 nvml-wrapper = "0.11.0"
