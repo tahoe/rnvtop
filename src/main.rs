@@ -86,11 +86,13 @@ pub struct Stats {
     pub mem_total: f32,
     pub drvr_ver: String,
     pub cuda_ver: f32,
+    pub dev_name: String,
 }
 
 impl Stats {
     pub fn new(device: &Device) -> Self {
         let brand = device.brand().unwrap(); // GeForce on my system
+        let dev_name = device.name().unwrap_or("unknown".into());
         let fan_speed = device.fan_speed(0).unwrap_or(0); // Currently 17% on my system
         let gpu_temp = device
             .temperature(nvml_wrapper::enum_wrappers::device::TemperatureSensor::Gpu)
@@ -128,6 +130,7 @@ impl Stats {
             mem_used,
             drvr_ver,
             cuda_ver,
+            dev_name,
         }
     }
 }
@@ -147,10 +150,13 @@ fn print_multiliner(device: &Device, looping: bool) {
         println!("{}\r", localtime::now().format("%Y-%m-%d %H:%M:%S"));
     }
 
-    // print the brand name
+    // print the brand/name
+    println!("GPU: {}\r", stats.dev_name);
+
+    // print the driver info
     println!(
-        "Brand: {:?}, Driver Ver: {}, CUDA Ver: {:.1}\r",
-        stats.brand, stats.drvr_ver, stats.cuda_ver
+        "Driver Ver: {}, CUDA Ver: {:.1}\r",
+        stats.drvr_ver, stats.cuda_ver
     );
 
     // print the fan speed
