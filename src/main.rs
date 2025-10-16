@@ -5,15 +5,13 @@ use crossterm::{
     terminal,
 };
 use nvml_wrapper::{enum_wrappers::device::Brand, Device, Nvml};
+use owo_colors::OwoColorize;
 // use std::env;
 use std::io::{self, Write};
 use std::thread::sleep;
 use std::time::Duration;
 
 fn main() -> io::Result<()> {
-    // Raw mode required for getting the 'q' so we can quit
-    terminal::enable_raw_mode()?;
-
     // parse our args into args
     let args = Args::parse();
 
@@ -25,6 +23,9 @@ fn main() -> io::Result<()> {
 
     // Start the loop if asked for
     if args.loopit {
+        // Raw mode required for getting the 'q' so we can quit
+        terminal::enable_raw_mode()?;
+
         loop {
             println!("\x1B[2J\x1B[1;1H");
 
@@ -56,7 +57,7 @@ fn main() -> io::Result<()> {
 }
 
 #[derive(Parser, Debug)]
-#[command(version, about, long_about = None)]
+#[command(version, about)]
 struct Args {
     // -l argument for running in a loop
     #[arg(short, long, default_value_t = false)]
@@ -147,40 +148,60 @@ fn print_multiliner(device: &Device, looping: bool) {
     let stats = Stats::new(device);
     // print local time of course only if in a loop
     if looping {
-        println!("{}\r", localtime::now().format("%Y-%m-%d %H:%M:%S"));
+        println!(
+            "{}\r",
+            localtime::now().format("%Y-%m-%d %H:%M:%S").yellow()
+        );
     }
 
     // print the brand/name
-    println!("GPU: {}\r", stats.dev_name);
+    print!("{}", "GPU:".red());
+    println!("{} {}\r", "GPU: ".red(), stats.dev_name.cyan());
 
     // print the driver info
     println!(
-        "Driver Ver: {}, CUDA Ver: {:.1}\r",
-        stats.drvr_ver, stats.cuda_ver
+        "{} {} {} {:.1}\r",
+        "Driver Ver:".red(),
+        stats.drvr_ver.cyan(),
+        "CUDA Ver:".red(),
+        stats.cuda_ver.cyan()
     );
 
     // print the fan speed
-    println!("Fan Speed: {:?}%\r", stats.fan_speed);
+    println!("{} {:?}\r", "Fan Speed: ".red(), stats.fan_speed.cyan());
 
     // print the gpu temp
-    println!("GPU Temp: {:?}C\r", stats.gpu_temp);
+    println!("{} {:?}c\r", "GPU Temp:".red(), stats.gpu_temp.cyan(),);
 
     // print the power used/cap
     println!(
-        "Power Usage: Used:{:?}W, Max:{:?}W\r",
-        stats.pwr_used, stats.pwr_cap
+        "{} {}{:?}, {}{:?}\r",
+        "Power Usageg:".red(),
+        "Used:".cyan(),
+        stats.pwr_used.yellow(),
+        "Max:".cyan(),
+        stats.pwr_cap.yellow(),
     );
 
     // print the mem used/total
     println!(
-        "Memory Usage: Used:{:.2?}GB, Total:{:.2?}GB\r",
-        stats.mem_used, stats.mem_total
+        "{} {}{:.2?}, {}{:.2?}\r",
+        "Memory Usage:".red(),
+        "Used:".cyan(),
+        stats.mem_used.yellow(),
+        "Max:".cyan(),
+        stats.mem_total.yellow(),
     );
 
     // print the GPU usage
     // print without newline so as not to waste space...
     println!(
-        "GPU Usage: {:?}%, Encoder: {:?}%, Decoder: {:?}%\r",
-        stats.gpu_util, stats.enc_util, stats.dec_util
+        "{} {:?}% {} {:?}% {} {:?}%\r",
+        "GPU Usage:".red(),
+        stats.gpu_util.cyan(),
+        "Encoder:".red(),
+        stats.enc_util.cyan(),
+        "Decoder:".red(),
+        stats.dec_util.cyan()
     );
 }
