@@ -139,7 +139,7 @@ impl Stats {
 fn print_oneline(device: &Device) {
     let stats = Stats::new(device);
     println!(
-        "GPU: {:?} Enc: {:?} Dec: {:?} Tmp: {:?} Fan: {:?}\r",
+        "{:?} Enc: {:?} Dec: {:?} Tmp: {:?} Fan: {:?}\r",
         stats.gpu_util, stats.enc_util, stats.dec_util, stats.gpu_temp, stats.fan_speed
     );
 }
@@ -155,7 +155,6 @@ fn print_multiliner(device: &Device, looping: bool) {
     }
 
     // print the brand/name
-    print!("{}", "GPU:".red());
     println!("{} {}\r", "GPU: ".red(), stats.dev_name.cyan());
 
     // print the driver info
