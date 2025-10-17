@@ -6,13 +6,14 @@ use crossterm::{
 };
 use nvml_wrapper::{enum_wrappers::device::Brand, Device, Nvml};
 use owo_colors::OwoColorize;
-// use std::env;
+use owo_colors::Stream::Stdout;
 use std::io::{self, Write};
 use std::thread::sleep;
 use std::time::Duration;
 
 fn main() -> io::Result<()> {
     // parse our args into args
+
     let args = Args::parse();
 
     // This stuff needs to be in main so we don't re-init the device
@@ -32,7 +33,7 @@ fn main() -> io::Result<()> {
             if args.oneliner {
                 print_oneline(&nv_dev);
             } else {
-                print_multiliner(&nv_dev, args.loopit);
+                print_multiliner(&nv_dev, args.loopit, args.colorize);
             }
 
             io::stdout().flush()?;
@@ -49,7 +50,7 @@ fn main() -> io::Result<()> {
         if args.oneliner {
             print_oneline(&nv_dev);
         } else {
-            print_multiliner(&nv_dev, args.loopit);
+            print_multiliner(&nv_dev, args.loopit, args.colorize);
         }
         terminal::disable_raw_mode()?;
         Ok(())
@@ -71,6 +72,10 @@ struct Args {
     // This should just change the default which is multi line, verbose output
     #[arg(short, long, default_value_t = false)]
     oneliner: bool,
+
+    // -c argument for colorizing
+    #[arg(short, long, default_value_t = false)]
+    colorize: bool,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -144,63 +149,83 @@ fn print_oneline(device: &Device) {
     );
 }
 
-fn print_multiliner(device: &Device, looping: bool) {
+fn print_multiliner(device: &Device, looping: bool, colorize: bool) {
+    // disable colors if flag set
+    // manually setting here since we don't have the option for this
+    owo_colors::set_override(colorize);
+
     let stats = Stats::new(device);
     // print local time of course only if in a loop
     if looping {
         println!(
             "{}\r",
-            localtime::now().format("%Y-%m-%d %H:%M:%S").yellow()
+            localtime::now()
+                .format("%Y-%m-%d %H:%M:%S")
+                .if_supports_color(Stdout, |textual| textual.yellow())
         );
     }
 
     // print the brand/name
-    println!("{} {}\r", "GPU: ".red(), stats.dev_name.cyan());
+    println!(
+        "{} {}\r",
+        "GPU: ".if_supports_color(Stdout, |gpu| gpu.red()),
+        stats.dev_name.if_supports_color(Stdout, |name| name.cyan())
+    );
 
     // print the driver info
     println!(
         "{} {} {} {:.1}\r",
-        "Driver Ver:".red(),
-        stats.drvr_ver.cyan(),
-        "CUDA Ver:".red(),
-        stats.cuda_ver.cyan()
+        "Driver Ver:".if_supports_color(Stdout, |ver| ver.red()),
+        stats.drvr_ver.if_supports_color(Stdout, |drvr| drvr.cyan()),
+        "CUDA Ver:".if_supports_color(Stdout, |ver| ver.red()),
+        stats.cuda_ver.if_supports_color(Stdout, |drvr| drvr.cyan()),
     );
 
     // print the fan speed
-    println!("{} {:?}\r", "Fan Speed: ".red(), stats.fan_speed.cyan());
+    println!(
+        "{} {:?}\r",
+        "Fan Speed: ".if_supports_color(Stdout, |clr| clr.red()),
+        stats.fan_speed.if_supports_color(Stdout, |clr| clr.cyan())
+    );
 
     // print the gpu temp
-    println!("{} {:?}c\r", "GPU Temp:".red(), stats.gpu_temp.cyan(),);
+    println!(
+        "{} {:?}c\r",
+        "GPU Temp:".if_supports_color(Stdout, |clr| clr.red()),
+        stats.gpu_temp.if_supports_color(Stdout, |clr| clr.cyan())
+    );
 
     // print the power used/cap
     println!(
         "{} {}{:?}, {}{:?}\r",
-        "Power Usageg:".red(),
-        "Used:".cyan(),
-        stats.pwr_used.yellow(),
-        "Max:".cyan(),
-        stats.pwr_cap.yellow(),
+        "Power Usageg:".if_supports_color(Stdout, |clr| clr.red()),
+        "Used:".if_supports_color(Stdout, |clr| clr.cyan()),
+        stats.pwr_used.if_supports_color(Stdout, |clr| clr.yellow()),
+        "Max:".if_supports_color(Stdout, |clr| clr.cyan()),
+        stats.pwr_cap.if_supports_color(Stdout, |clr| clr.yellow()),
     );
 
     // print the mem used/total
     println!(
         "{} {}{:.2?}, {}{:.2?}\r",
-        "Memory Usage:".red(),
-        "Used:".cyan(),
-        stats.mem_used.yellow(),
-        "Max:".cyan(),
-        stats.mem_total.yellow(),
+        "Memory Usage:".if_supports_color(Stdout, |clr| clr.red()),
+        "Used:".if_supports_color(Stdout, |clr| clr.cyan()),
+        stats.mem_used.if_supports_color(Stdout, |clr| clr.yellow()),
+        "Max:".if_supports_color(Stdout, |clr| clr.cyan()),
+        stats
+            .mem_total
+            .if_supports_color(Stdout, |clr| clr.yellow()),
     );
 
     // print the GPU usage
     // print without newline so as not to waste space...
     println!(
         "{} {:?}% {} {:?}% {} {:?}%\r",
-        "GPU Usage:".red(),
-        stats.gpu_util.cyan(),
-        "Encoder:".red(),
-        stats.enc_util.cyan(),
-        "Decoder:".red(),
-        stats.dec_util.cyan()
+        "GPU Usage:".if_supports_color(Stdout, |clr| clr.red()),
+        stats.gpu_util.if_supports_color(Stdout, |clr| clr.cyan()),
+        "Encoder:".if_supports_color(Stdout, |clr| clr.red()),
+        stats.enc_util.if_supports_color(Stdout, |clr| clr.cyan()),
+        "Decoder:".if_supports_color(Stdout, |clr| clr.red()),
+        stats.dec_util.if_supports_color(Stdout, |clr| clr.cyan())
     );
 }
