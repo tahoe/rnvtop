@@ -9,8 +9,12 @@ use std::fmt;
 use std::io;
 use std::thread::sleep;
 use std::time::Duration;
+use tabled::settings::object::Segment;
+use tabled::settings::style::BorderColor;
+use tabled::settings::Settings;
+use tabled::settings::Style;
 use tabled::{
-    settings::{object::Rows, Color, Concat, Style},
+    settings::{object::Rows, Color, Concat},
     Table, Tabled,
 };
 
@@ -34,17 +38,13 @@ fn main() -> io::Result<()> {
                 print_tabular(&nv_dev, args.colorize);
             } else if args.json {
                 print_json(&nv_dev);
-            } else if args.oneliner {
-                print_oneline(&nv_dev);
             } else {
                 print_multiliner(&nv_dev, args.loopit, args.colorize);
             }
             sleep(Duration::from_secs(args.freq));
         }
     } else {
-        if args.oneliner {
-            print_oneline(&nv_dev);
-        } else if args.json {
+        if args.json {
             print_json(&nv_dev);
         } else if args.tabular {
             print_tabular(&nv_dev, args.colorize);
@@ -66,39 +66,16 @@ struct Args {
     #[arg(short, long, default_value_t = 1)]
     freq: u64,
 
-    // -o argument for printing single line!
-    // This should just change the default which is multi line, verbose output
-    #[arg(
-        short,
-        long,
-        conflicts_with = "tabular",
-        conflicts_with = "json",
-        default_value_t = false
-    )]
-    oneliner: bool,
-
     // -c argument for colorizing
     #[arg(short, long, default_value_t = false)]
     colorize: bool,
 
     // -j argument for json output
-    #[arg(
-        short,
-        long,
-        conflicts_with = "oneliner",
-        conflicts_with = "tabular",
-        default_value_t = false
-    )]
+    #[arg(short, long, conflicts_with = "tabular", default_value_t = false)]
     json: bool,
 
     // -t argument for tabular output
-    #[arg(
-        short,
-        long,
-        conflicts_with = "json",
-        conflicts_with = "oneliner",
-        default_value_t = false
-    )]
+    #[arg(short, long, conflicts_with = "json", default_value_t = false)]
     tabular: bool,
 }
 
@@ -284,15 +261,6 @@ impl Stats {
     }
 }
 
-fn print_oneline(device: &Device) {
-    let _stats = Stats::new(device);
-    println!("Oneliner");
-    // println!(
-    //     "{:?} Enc: {:?} Dec: {:?} Tmp: {:?} Fan: {:?}\r",
-    //     stats.gpu_util, stats.enc_util, stats.dec_util, stats.gpu_temp, stats.fan_speed
-    // );
-}
-
 fn print_json(device: &Device) {
     let stats = Stats::new(device);
     let stats = to_colored_json_auto(&stats).expect("Fuck");
@@ -313,37 +281,33 @@ fn print_tabular(device: &Device, colorize: bool) {
     let v_gpustats = vec![stats.gpustats];
 
     let mut devinfo_table = Table::new(v_devinfo);
-    let mut memory_table = Table::new(v_memory);
-    let mut power_table = Table::new(v_power);
-    let mut fantemp_table = Table::new(v_fantemp);
-    let mut gpustats_table = Table::new(v_gpustats);
+    let memory_table = Table::new(v_memory);
+    let power_table = Table::new(v_power);
+    let fantemp_table = Table::new(v_fantemp);
+    let gpustats_table = Table::new(v_gpustats);
 
-    devinfo_table.with(Style::rounded());
-    memory_table.with(Style::rounded());
-    power_table.with(Style::rounded());
-    fantemp_table.with(Style::rounded());
-    gpustats_table.with(Style::rounded());
-
-    if colorize {
-        devinfo_table.modify(Rows::first(), Color::FG_BRIGHT_GREEN);
-        devinfo_table.modify(Rows::last(), Color::FG_BRIGHT_CYAN);
-
-        memory_table.modify(Rows::first(), Color::FG_BRIGHT_GREEN);
-        memory_table.modify(Rows::last(), Color::FG_BRIGHT_CYAN);
-
-        power_table.modify(Rows::first(), Color::FG_BRIGHT_GREEN);
-        power_table.modify(Rows::last(), Color::FG_BRIGHT_CYAN);
-
-        fantemp_table.modify(Rows::first(), Color::FG_BRIGHT_GREEN);
-        fantemp_table.modify(Rows::last(), Color::FG_BRIGHT_CYAN);
-
-        gpustats_table.modify(Rows::first(), Color::FG_BRIGHT_GREEN);
-        gpustats_table.modify(Rows::last(), Color::FG_BRIGHT_CYAN);
-    }
     devinfo_table.with(Concat::vertical(memory_table));
     devinfo_table.with(Concat::vertical(power_table));
     devinfo_table.with(Concat::vertical(fantemp_table));
     devinfo_table.with(Concat::vertical(gpustats_table));
+
+    let header_options = Settings::empty().with(Color::FG_BRIGHT_GREEN | Color::BOLD);
+    let border_color = Color::FG_YELLOW;
+    if colorize {
+        devinfo_table.modify(Rows::one(0), header_options.clone());
+        devinfo_table.modify(Rows::one(1), Color::FG_BRIGHT_CYAN);
+        devinfo_table.modify(Rows::one(2), header_options.clone());
+        devinfo_table.modify(Rows::one(3), Color::FG_BRIGHT_CYAN);
+        devinfo_table.modify(Rows::one(4), header_options.clone());
+        devinfo_table.modify(Rows::one(5), Color::FG_BRIGHT_CYAN);
+        devinfo_table.modify(Rows::one(6), header_options.clone());
+        devinfo_table.modify(Rows::one(7), Color::FG_BRIGHT_CYAN);
+        devinfo_table.modify(Rows::one(8), Color::FG_BRIGHT_GREEN);
+        devinfo_table.modify(Rows::one(9), Color::FG_BRIGHT_CYAN);
+    }
+    devinfo_table.modify(Segment::all(), BorderColor::filled(border_color));
+    devinfo_table.with(Style::modern_rounded());
+
     println!("{}", devinfo_table);
 }
 
@@ -442,7 +406,6 @@ fn print_multiliner(device: &Device, looping: bool, colorize: bool) {
     );
 
     // print the GPU usage
-    // print without newline so as not to waste space...
     println!(
         "{} {:?}% {} {:?}% {} {:?}%\r",
         "GPU Usage:".if_supports_color(Stdout, |clr| clr.red()),
