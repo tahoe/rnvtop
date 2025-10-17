@@ -1,6 +1,6 @@
 [package]
 name = "rnvtop"
-version = "0.3.3"
+version = "0.4.0"
 description = "General Nvidia GPU monitoring"
 edition = "2024"
 license = "MIT"
@@ -15,5 +15,5 @@ nvml-wrapper = "0.11.0"
 owo-colors = { version = "4.2.3", features = ["supports-colors"] }
 serde = { version = "1.0.228", features = ["derive"]}
 serde_json = "1.0.145"
-# tabled = "0.20.0"
+tabled = "0.20.0"
 # strum = { version = "0.27.2", features = ["derive"]}

@@ -14,6 +14,7 @@ use colored_json::to_colored_json_auto;
 use std::io::{self, Write};
 use std::thread::sleep;
 use std::time::Duration;
+use tabled::{settings::Style, Table, Tabled};
 
 fn main() -> io::Result<()> {
     // parse our args into args
@@ -49,10 +50,12 @@ fn main() -> io::Result<()> {
             sleep(Duration::from_secs(args.freq));
         }
     } else {
-        if args.oneliner && !args.json {
+        if args.oneliner {
             print_oneline(&nv_dev);
-        } else if args.json && !args.oneliner {
+        } else if args.json {
             print_json(&nv_dev);
+        } else if args.tabular {
+            print_tabular(&nv_dev);
         } else {
             print_multiliner(&nv_dev, args.loopit, args.colorize);
         }
@@ -74,31 +77,47 @@ struct Args {
 
     // -o argument for printing single line!
     // This should just change the default which is multi line, verbose output
-    #[arg(short, long, default_value_t = false)]
+    #[arg(short, long, exclusive = true, default_value_t = false)]
     oneliner: bool,
 
     // -c argument for colorizing
     #[arg(short, long, default_value_t = false)]
     colorize: bool,
 
-    // -t argument for json output
-    #[arg(short, long, default_value_t = false)]
+    // -j argument for json output
+    #[arg(short, long, exclusive = true, default_value_t = false)]
     json: bool,
+
+    // -t argument for tabular output
+    #[arg(short, long, exclusive = true, default_value_t = false)]
+    tabular: bool,
 }
 
-#[derive(Clone, Debug, PartialEq, Serialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Tabled)]
 pub struct Stats {
+    #[tabled(rename = "Fan")]
     pub fan_speed: u32,
+    #[tabled(rename = "Temp")]
     pub gpu_temp: u32,
+    #[tabled(rename = "PWR Used")]
     pub pwr_used: u32,
+    #[tabled(rename = "PWR Max")]
     pub pwr_cap: u32,
+    #[tabled(rename = "GPU Util")]
     pub gpu_util: u32,
+    #[tabled(rename = "Enc Util")]
     pub enc_util: u32,
+    #[tabled(rename = "Dec Util")]
     pub dec_util: u32,
+    #[tabled(rename = "Mem Used")]
     pub mem_used: f32,
+    #[tabled(rename = "Mem Total")]
     pub mem_total: f32,
+    #[tabled(rename = "Driver Ver")]
     pub drvr_ver: String,
+    #[tabled(rename = "Cuda Ver")]
     pub cuda_ver: f32,
+    #[tabled(rename = "Device Name")]
     pub dev_name: String,
 }
 
@@ -155,11 +174,17 @@ fn print_oneline(device: &Device) {
 }
 
 fn print_json(device: &Device) {
-    // owo_colors::set_override(colorize);
-
     let stats = Stats::new(device);
     let stats = to_colored_json_auto(&stats).expect("Fuck");
     println!("{}", stats);
+}
+
+fn print_tabular(device: &Device) {
+    let stats = Stats::new(device);
+    let v_stats = vec![stats];
+    let mut table = Table::new(v_stats);
+    table.with(Style::rounded());
+    println!("{}", table);
 }
 
 fn print_multiliner(device: &Device, looping: bool, colorize: bool) {
@@ -203,9 +228,10 @@ fn print_multiliner(device: &Device, looping: bool, colorize: bool) {
 
     // print the gpu temp
     println!(
-        "{} {:?}c\r",
+        "{} {:?}{}\r",
         "GPU Temp:".if_supports_color(Stdout, |clr| clr.red()),
-        stats.gpu_temp.if_supports_color(Stdout, |clr| clr.cyan())
+        stats.gpu_temp.if_supports_color(Stdout, |clr| clr.cyan()),
+        "c".yellow()
     );
 
     // print the power used/cap
