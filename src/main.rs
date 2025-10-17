@@ -201,7 +201,7 @@ fn print_multiliner(device: &Device, looping: bool, colorize: bool) {
     // print the brand/name
     println!(
         "{} {}\r",
-        "GPU: ".if_supports_color(Stdout, |gpu| gpu.red()),
+        "GPU:".if_supports_color(Stdout, |gpu| gpu.red()),
         stats.dev_name.if_supports_color(Stdout, |name| name.cyan())
     );
 
