@@ -34,9 +34,9 @@ fn main() -> io::Result<()> {
         loop {
             print!("\x1B[2J\x1B[1;1H");
 
-            if args.oneliner {
+            if args.oneliner && !args.json {
                 print_oneline(&nv_dev);
-            } else if args.json {
+            } else if args.json && !args.oneliner {
                 print_json(&nv_dev, args.colorize);
             } else {
                 print_multiliner(&nv_dev, args.loopit, args.colorize);
@@ -54,9 +54,9 @@ fn main() -> io::Result<()> {
             sleep(Duration::from_secs(args.freq));
         }
     } else {
-        if args.oneliner {
+        if args.oneliner && !args.json {
             print_oneline(&nv_dev);
-        } else if args.json {
+        } else if args.json && !args.oneliner {
             print_json(&nv_dev, args.colorize);
         } else {
             print_multiliner(&nv_dev, args.loopit, args.colorize);
