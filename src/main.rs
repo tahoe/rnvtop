@@ -9,8 +9,6 @@ use std::fmt;
 use std::io;
 use std::thread::sleep;
 use std::time::Duration;
-use tabled::settings::object::Segment;
-use tabled::settings::style::BorderColor;
 use tabled::settings::Settings;
 use tabled::settings::Style;
 use tabled::{
@@ -291,8 +289,8 @@ fn print_tabular(device: &Device, colorize: bool) {
     devinfo_table.with(Concat::vertical(fantemp_table));
     devinfo_table.with(Concat::vertical(gpustats_table));
 
+    // this finally lets us have BOLD colors
     let header_options = Settings::empty().with(Color::FG_BRIGHT_GREEN | Color::BOLD);
-    let border_color = Color::FG_YELLOW;
     if colorize {
         devinfo_table.modify(Rows::one(0), header_options.clone());
         devinfo_table.modify(Rows::one(1), Color::FG_BRIGHT_CYAN);
@@ -306,7 +304,6 @@ fn print_tabular(device: &Device, colorize: bool) {
         devinfo_table.modify(Rows::one(9), Color::FG_BRIGHT_CYAN);
     }
     devinfo_table.with(Style::modern_rounded());
-    devinfo_table.modify(Segment::all(), BorderColor::filled(border_color));
 
     println!("{}", devinfo_table);
 }
