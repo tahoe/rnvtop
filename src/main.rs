@@ -28,7 +28,7 @@ fn main() -> io::Result<()> {
         terminal::enable_raw_mode()?;
 
         loop {
-            println!("\x1B[2J\x1B[1;1H");
+            print!("\x1B[2J\x1B[1;1H");
 
             if args.oneliner {
                 print_oneline(&nv_dev);
