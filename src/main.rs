@@ -9,7 +9,10 @@ use colored_json::to_colored_json_auto;
 use std::io;
 use std::thread::sleep;
 use std::time::Duration;
-use tabled::{settings::Style, Table, Tabled};
+use tabled::{
+    settings::{object::Rows, Color, Style},
+    Table, Tabled,
+};
 
 fn main() -> io::Result<()> {
     // parse our args into args
@@ -28,7 +31,7 @@ fn main() -> io::Result<()> {
             print!("\x1B[2J\x1B[1;1H");
 
             if args.tabular {
-                print_tabular(&nv_dev);
+                print_tabular(&nv_dev, args.colorize);
             } else if args.json {
                 print_json(&nv_dev);
             } else if args.oneliner {
@@ -44,7 +47,7 @@ fn main() -> io::Result<()> {
         } else if args.json {
             print_json(&nv_dev);
         } else if args.tabular {
-            print_tabular(&nv_dev);
+            print_tabular(&nv_dev, args.colorize);
         } else {
             print_multiliner(&nv_dev, args.loopit, args.colorize);
         }
@@ -167,11 +170,15 @@ fn print_json(device: &Device) {
     println!("{}", stats);
 }
 
-fn print_tabular(device: &Device) {
+fn print_tabular(device: &Device, colorize: bool) {
     let stats = Stats::new(device);
     let v_stats = vec![stats];
     let mut table = Table::new(v_stats);
     table.with(Style::rounded());
+    if colorize {
+        table.modify(Rows::first(), Color::FG_BRIGHT_GREEN);
+        table.modify(Rows::last(), Color::FG_BRIGHT_CYAN);
+    }
     println!("{}", table);
 }
 
