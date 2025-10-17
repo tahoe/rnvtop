@@ -35,13 +35,7 @@ fn main() -> io::Result<()> {
         loop {
             print!("\x1B[2J\x1B[1;1H");
 
-            if args.oneliner && !args.json {
-                print_oneline(&nv_dev);
-            } else if args.json && !args.oneliner {
-                print_json(&nv_dev, args.colorize);
-            } else {
-                print_multiliner(&nv_dev, args.loopit, args.colorize);
-            }
+            print_multiliner(&nv_dev, args.loopit, args.colorize);
 
             io::stdout().flush()?;
             if event::poll(Duration::from_millis(100))?
@@ -58,7 +52,7 @@ fn main() -> io::Result<()> {
         if args.oneliner && !args.json {
             print_oneline(&nv_dev);
         } else if args.json && !args.oneliner {
-            print_json(&nv_dev, args.colorize);
+            print_json(&nv_dev);
         } else {
             print_multiliner(&nv_dev, args.loopit, args.colorize);
         }
@@ -160,8 +154,8 @@ fn print_oneline(device: &Device) {
     );
 }
 
-fn print_json(device: &Device, colorize: bool) {
-    owo_colors::set_override(colorize);
+fn print_json(device: &Device) {
+    // owo_colors::set_override(colorize);
 
     let stats = Stats::new(device);
     let stats = to_colored_json_auto(&stats).expect("Fuck");
