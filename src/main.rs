@@ -10,6 +10,7 @@ use owo_colors::OwoColorize;
 use owo_colors::Stream::Stdout;
 use serde::Serialize;
 
+use colored_json::to_colored_json_auto;
 use std::io::{self, Write};
 use std::thread::sleep;
 use std::time::Duration;
@@ -163,7 +164,7 @@ fn print_json(device: &Device, colorize: bool) {
     owo_colors::set_override(colorize);
 
     let stats = Stats::new(device);
-    let stats = serde_json::to_string(&stats).expect("Fuck");
+    let stats = to_colored_json_auto(&stats).expect("Fuck");
     println!("{}", stats);
 }
 
