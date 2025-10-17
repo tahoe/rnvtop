@@ -5,9 +5,11 @@ use crossterm::{
     event::{self, Event, KeyCode},
     execute, terminal,
 };
-use nvml_wrapper::{enum_wrappers::device::Brand, Device, Nvml};
+use nvml_wrapper::{Device, Nvml};
 use owo_colors::OwoColorize;
 use owo_colors::Stream::Stdout;
+use serde::Serialize;
+
 use std::io::{self, Write};
 use std::thread::sleep;
 use std::time::Duration;
@@ -34,6 +36,8 @@ fn main() -> io::Result<()> {
 
             if args.oneliner {
                 print_oneline(&nv_dev);
+            } else if args.json {
+                print_json(&nv_dev, args.colorize);
             } else {
                 print_multiliner(&nv_dev, args.loopit, args.colorize);
             }
@@ -52,6 +56,8 @@ fn main() -> io::Result<()> {
     } else {
         if args.oneliner {
             print_oneline(&nv_dev);
+        } else if args.json {
+            print_json(&nv_dev, args.colorize);
         } else {
             print_multiliner(&nv_dev, args.loopit, args.colorize);
         }
@@ -79,11 +85,14 @@ struct Args {
     // -c argument for colorizing
     #[arg(short, long, default_value_t = false)]
     colorize: bool,
+
+    // -t argument for json output
+    #[arg(short, long, default_value_t = false)]
+    json: bool,
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct Stats {
-    pub brand: Brand,
     pub fan_speed: u32,
     pub gpu_temp: u32,
     pub pwr_used: u32,
@@ -100,7 +109,6 @@ pub struct Stats {
 
 impl Stats {
     pub fn new(device: &Device) -> Self {
-        let brand = device.brand().unwrap(); // GeForce on my system
         let dev_name = device.name().unwrap_or("unknown".into());
         let fan_speed = device.fan_speed(0).unwrap_or(0); // Currently 17% on my system
         let gpu_temp = device
@@ -127,7 +135,6 @@ impl Stats {
         // get the driver memory_info
         let cuda_ver = device.nvml().sys_cuda_driver_version().unwrap_or(0) as f32 / 1000.0;
         Self {
-            brand,
             fan_speed,
             gpu_temp,
             pwr_cap,
@@ -150,6 +157,14 @@ fn print_oneline(device: &Device) {
         "{:?} Enc: {:?} Dec: {:?} Tmp: {:?} Fan: {:?}\r",
         stats.gpu_util, stats.enc_util, stats.dec_util, stats.gpu_temp, stats.fan_speed
     );
+}
+
+fn print_json(device: &Device, colorize: bool) {
+    owo_colors::set_override(colorize);
+
+    let stats = Stats::new(device);
+    let stats = serde_json::to_string(&stats).expect("Fuck");
+    println!("{}", stats);
 }
 
 fn print_multiliner(device: &Device, looping: bool, colorize: bool) {
