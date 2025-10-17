@@ -1,17 +1,12 @@
 use chrono::offset::Local as localtime;
 use clap::Parser;
-use crossterm::{
-    cursor::Hide,
-    event::{self, Event, KeyCode},
-    execute, terminal,
-};
 use nvml_wrapper::{Device, Nvml};
 use owo_colors::OwoColorize;
 use owo_colors::Stream::Stdout;
 use serde::Serialize;
 
 use colored_json::to_colored_json_auto;
-use std::io::{self, Write};
+use std::io;
 use std::thread::sleep;
 use std::time::Duration;
 use tabled::{settings::Style, Table, Tabled};
@@ -29,23 +24,17 @@ fn main() -> io::Result<()> {
 
     // Start the loop if asked for
     if args.loopit {
-        // Raw mode required for getting the 'q' so we can quit
-        terminal::enable_raw_mode()?;
-        execute!(io::stdout(), Hide)?;
-
         loop {
             print!("\x1B[2J\x1B[1;1H");
 
-            print_multiliner(&nv_dev, args.loopit, args.colorize);
-
-            io::stdout().flush()?;
-            if event::poll(Duration::from_millis(100))?
-                && let Event::Key(key_event) = event::read()?
-                && key_event.code == KeyCode::Char('q')
-            {
-                println!();
-                terminal::disable_raw_mode()?;
-                break Ok(());
+            if args.tabular {
+                print_tabular(&nv_dev);
+            } else if args.json {
+                print_json(&nv_dev);
+            } else if args.oneliner {
+                print_oneline(&nv_dev);
+            } else {
+                print_multiliner(&nv_dev, args.loopit, args.colorize);
             }
             sleep(Duration::from_secs(args.freq));
         }
@@ -59,7 +48,6 @@ fn main() -> io::Result<()> {
         } else {
             print_multiliner(&nv_dev, args.loopit, args.colorize);
         }
-        terminal::disable_raw_mode()?;
         Ok(())
     }
 }
@@ -77,7 +65,7 @@ struct Args {
 
     // -o argument for printing single line!
     // This should just change the default which is multi line, verbose output
-    #[arg(short, long, exclusive = true, default_value_t = false)]
+    #[arg(short, long, conflicts_with = "tabular", default_value_t = false)]
     oneliner: bool,
 
     // -c argument for colorizing
@@ -85,11 +73,11 @@ struct Args {
     colorize: bool,
 
     // -j argument for json output
-    #[arg(short, long, exclusive = true, default_value_t = false)]
+    #[arg(short, long, conflicts_with = "oneliner", default_value_t = false)]
     json: bool,
 
     // -t argument for tabular output
-    #[arg(short, long, exclusive = true, default_value_t = false)]
+    #[arg(short, long, conflicts_with = "json", default_value_t = false)]
     tabular: bool,
 }
 
@@ -258,7 +246,7 @@ fn print_multiliner(device: &Device, looping: bool, colorize: bool) {
 
     // print the GPU usage
     // print without newline so as not to waste space...
-    print!(
+    println!(
         "{} {:?}% {} {:?}% {} {:?}%\r",
         "GPU Usage:".if_supports_color(Stdout, |clr| clr.red()),
         stats.gpu_util.if_supports_color(Stdout, |clr| clr.cyan()),
