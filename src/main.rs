@@ -305,8 +305,8 @@ fn print_tabular(device: &Device, colorize: bool) {
         devinfo_table.modify(Rows::one(8), Color::FG_BRIGHT_GREEN);
         devinfo_table.modify(Rows::one(9), Color::FG_BRIGHT_CYAN);
     }
-    devinfo_table.modify(Segment::all(), BorderColor::filled(border_color));
     devinfo_table.with(Style::modern_rounded());
+    devinfo_table.modify(Segment::all(), BorderColor::filled(border_color));
 
     println!("{}", devinfo_table);
 }
