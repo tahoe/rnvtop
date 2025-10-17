@@ -1,8 +1,9 @@
 use chrono::offset::Local as localtime;
 use clap::Parser;
 use crossterm::{
+    cursor::Hide,
     event::{self, Event, KeyCode},
-    terminal,
+    execute, terminal,
 };
 use nvml_wrapper::{enum_wrappers::device::Brand, Device, Nvml};
 use owo_colors::OwoColorize;
@@ -26,6 +27,7 @@ fn main() -> io::Result<()> {
     if args.loopit {
         // Raw mode required for getting the 'q' so we can quit
         terminal::enable_raw_mode()?;
+        execute!(io::stdout(), Hide)?;
 
         loop {
             print!("\x1B[2J\x1B[1;1H");
@@ -41,6 +43,7 @@ fn main() -> io::Result<()> {
                 && let Event::Key(key_event) = event::read()?
                 && key_event.code == KeyCode::Char('q')
             {
+                println!();
                 terminal::disable_raw_mode()?;
                 break Ok(());
             }
@@ -219,7 +222,7 @@ fn print_multiliner(device: &Device, looping: bool, colorize: bool) {
 
     // print the GPU usage
     // print without newline so as not to waste space...
-    println!(
+    print!(
         "{} {:?}% {} {:?}% {} {:?}%\r",
         "GPU Usage:".if_supports_color(Stdout, |clr| clr.red()),
         stats.gpu_util.if_supports_color(Stdout, |clr| clr.cyan()),
