@@ -68,7 +68,13 @@ struct Args {
 
     // -o argument for printing single line!
     // This should just change the default which is multi line, verbose output
-    #[arg(short, long, conflicts_with = "tabular", default_value_t = false)]
+    #[arg(
+        short,
+        long,
+        conflicts_with = "tabular",
+        conflicts_with = "json",
+        default_value_t = false
+    )]
     oneliner: bool,
 
     // -c argument for colorizing
@@ -76,11 +82,23 @@ struct Args {
     colorize: bool,
 
     // -j argument for json output
-    #[arg(short, long, conflicts_with = "oneliner", default_value_t = false)]
+    #[arg(
+        short,
+        long,
+        conflicts_with = "oneliner",
+        conflicts_with = "tabular",
+        default_value_t = false
+    )]
     json: bool,
 
     // -t argument for tabular output
-    #[arg(short, long, conflicts_with = "json", default_value_t = false)]
+    #[arg(
+        short,
+        long,
+        conflicts_with = "json",
+        conflicts_with = "oneliner",
+        default_value_t = false
+    )]
     tabular: bool,
 }
 
