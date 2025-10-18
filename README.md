@@ -3,14 +3,14 @@ Rust Nvidia SMI top like program, as a playground for eventually writing a gnome
 
 ## There are 3 different output types
 
-* Tabular
+* Tabular `rnvtop -tc`
 
   ![Table View](./artifacts/tabular.png "Table View")
 
-* Json
+* Json `rnvtop -j`
 
   ![Json View](./artifacts/json.png "Json View")
 
-* Mutliline print
+* Mutliline print `rnvtop -lc`
 
   ![Multiline View](./artifacts/multiline.png "Multiline View")
