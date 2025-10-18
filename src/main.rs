@@ -1,3 +1,36 @@
+//! Lightweight NVML tool for checking status of an Nvidia GPU
+//!
+//! Provides 3 different types of output
+//! - tabular
+//! - json
+//! - multiline printed output
+//!
+//! # Usage
+//!
+//! First, install it with `cargo install rnvtop`
+//!
+//! Help output:
+//! ```
+//! General Nvidia GPU monitoring
+//!
+//! Usage: rnvtop [OPTIONS]
+//!
+//! Options:
+//!   -l, --loopit       
+//!   -f, --freq <FREQ>  [default: 1]
+//!   -c, --colorize     
+//!   -j, --json         
+//!   -t, --tabular      
+//!   -h, --help         Print help
+//!   -V, --version      Print version
+//!```
+//!
+//!
+//! Then run it with one offset
+//! - `rnvtop -tc` // to get tabular output
+//! - `rnvtop -j` // to get json output
+//!
+//!
 use chrono::offset::Local as localtime;
 use clap::Parser;
 use colored_json::to_colored_json_auto;
@@ -53,6 +86,9 @@ fn main() -> io::Result<()> {
     }
 }
 
+///
+/// This is the Args struct
+///
 #[derive(Parser, Debug)]
 #[command(version, about)]
 struct Args {
@@ -77,6 +113,9 @@ struct Args {
     tabular: bool,
 }
 
+///
+/// GPU utilization struct, with 3 values for gpu, encoding and decoding usage %
+///
 #[derive(Clone, Debug, PartialEq, Serialize, Tabled)]
 pub struct GpuStats {
     #[tabled(rename = "GPU Util")]
@@ -87,6 +126,9 @@ pub struct GpuStats {
     pub dec_util: u32,
 }
 
+///
+/// GPU struct needs Display trait
+///
 impl fmt::Display for GpuStats {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
@@ -97,6 +139,9 @@ impl fmt::Display for GpuStats {
     }
 }
 
+///
+/// FanTemp struct holds fan speed and gpu temperature
+///
 #[derive(Clone, Debug, PartialEq, Serialize, Tabled)]
 pub struct FanTemp {
     #[tabled(rename = "Fan Speed")]
@@ -105,6 +150,9 @@ pub struct FanTemp {
     pub gpu_temp: u32,
 }
 
+///
+/// FanTemp struct needs Display trait
+///
 impl fmt::Display for FanTemp {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
@@ -115,6 +163,9 @@ impl fmt::Display for FanTemp {
     }
 }
 
+///
+/// Power struct holds power used and max power
+///
 #[derive(Clone, Debug, PartialEq, Serialize, Tabled)]
 pub struct Power {
     #[tabled(rename = "PWR Used")]
@@ -123,12 +174,18 @@ pub struct Power {
     pub pwr_cap: u32,
 }
 
+///
+/// Power struct needs Display trait
+///
 impl fmt::Display for Power {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "pwr_used: {}, pwr_cap: {}", self.pwr_used, self.pwr_cap)
     }
 }
 
+///
+/// Memory struct holds used and total memory
+///
 #[derive(Clone, Debug, PartialEq, Serialize, Tabled)]
 pub struct Memory {
     #[tabled(rename = "Memory Used")]
@@ -137,6 +194,9 @@ pub struct Memory {
     pub mem_total: f32,
 }
 
+///
+/// Memory struct needs Display trait
+///
 impl fmt::Display for Memory {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
@@ -147,6 +207,9 @@ impl fmt::Display for Memory {
     }
 }
 
+///
+/// DeviceInfo struct holds device name and driver versions, including CUDA
+///
 #[derive(Clone, Debug, PartialEq, Serialize, Tabled)]
 pub struct DeviceInfo {
     #[tabled(rename = "Driver Ver")]
@@ -157,6 +220,9 @@ pub struct DeviceInfo {
     pub dev_name: String,
 }
 
+///
+/// DeviceInfo struct needs Display trait
+///
 impl fmt::Display for DeviceInfo {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
@@ -167,6 +233,9 @@ impl fmt::Display for DeviceInfo {
     }
 }
 
+///
+/// Stats struct holds the other structs
+///
 #[derive(Clone, Debug, PartialEq, Serialize, Tabled)]
 pub struct Stats {
     // DeviceInfo sub struct
@@ -190,6 +259,8 @@ pub struct Stats {
     pub power: Power,
 }
 
+///
+/// Stats instance method `new`
 impl Stats {
     pub fn new(device: &Device) -> Self {
         // get fan/temp info
@@ -259,18 +330,19 @@ impl Stats {
     }
 }
 
+///
+/// print_json just pretty prints the struct instance as json
+///
 fn print_json(device: &Device) {
     let stats = Stats::new(device);
     let stats = to_colored_json_auto(&stats).expect("Fuck");
     println!("{}", stats);
 }
 
+///
+/// print_tabular prints the output into a nice colorized tabled
+///
 fn print_tabular(device: &Device, colorize: bool) {
-    //     devinfo,
-    //     memory,
-    //     power,
-    //     fantemp,
-    //     gpustats,
     let stats = Stats::new(device);
     let v_devinfo = vec![stats.devinfo];
     let v_memory = vec![stats.memory];
@@ -308,6 +380,9 @@ fn print_tabular(device: &Device, colorize: bool) {
     println!("{}", devinfo_table);
 }
 
+///
+/// print_multiliner prints the output into colorized multilines of output
+///
 fn print_multiliner(device: &Device, looping: bool, colorize: bool) {
     // disable colors if flag set
     // manually setting here since we don't have the option for this
