@@ -3,6 +3,6 @@ Rust Nvidia SMI top like program, as a playground for eventually writing a gnome
 
 ![Table View](./artifacts/tabular.png "Table View")
 
-![Json View](./artifacts/Json.png "Json View")
+![Json View](./artifacts/json.png "Json View")
 
-![Multiline View](./artifacts/Multiline.png "Multiline View")
+![Multiline View](./artifacts/multiline.png "Multiline View")
