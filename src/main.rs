@@ -306,7 +306,10 @@ impl Stats {
         };
 
         // get the driver memory_info
-        let dev_name = device.name().unwrap_or("unknown".into());
+        let dev_name = device
+            .name()
+            .unwrap_or("unknown".into())
+            .replace("NVIDIA ", "");
         let drvr_ver = device
             .nvml()
             .sys_driver_version()

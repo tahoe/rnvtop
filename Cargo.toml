@@ -1,6 +1,6 @@
 [package]
 name = "rnvtop"
-version = "1.1.0"
+version = "1.1.1"
 description = "General Nvidia GPU monitoring"
 edition = "2024"
 license = "MIT"
