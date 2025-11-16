@@ -31,6 +31,7 @@
 //! - `rnvtop -j` // to get json output
 //!
 //!
+use anyhow::Result;
 use chrono::offset::Local as localtime;
 use clap::Parser;
 use colored_json::to_colored_json_auto;
@@ -39,7 +40,6 @@ use owo_colors::OwoColorize;
 use owo_colors::Stream::Stdout;
 use serde::Serialize;
 use std::fmt;
-use std::io;
 use std::thread::sleep;
 use std::time::Duration;
 use tabled::settings::Settings;
@@ -49,16 +49,16 @@ use tabled::{
     Table, Tabled,
 };
 
-fn main() -> io::Result<()> {
+fn main() -> Result<()> {
     // parse our args into args
 
     let args = Args::parse();
 
     // This stuff needs to be in main so we don't re-init the device
-    let nvml = Nvml::init();
+    let nvml = Nvml::init()?;
     // Get the first `Device` (GPU) in the system
-    let nvml_obj = nvml.expect("wtf");
-    let nv_dev = nvml_obj.device_by_index(0).unwrap();
+    // let nvml_obj = nvml.expect("wtf");
+    let nv_dev = nvml.device_by_index(0).unwrap();
 
     // Start the loop if asked for
     if args.loopit {
