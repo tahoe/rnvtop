@@ -17,3 +17,6 @@ owo-colors = { version = "4.2.3", features = ["supports-colors"] }
 serde = { version = "1.0.228", features = ["derive"]}
 serde_json = "1.0.145"
 tabled = "0.20.0"
+
+## Test using hardware-query library which also uses nvml-wrapper if required
+## But also supports Intel which would be quite helpful...
